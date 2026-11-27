@@ -6,18 +6,18 @@
   { "version": "8.6.4", "type": "regular" },
   { "version": "8.6.5", "type": "regular" },
   { "version": "8.6.6",   "type": "regular" },
-  { "version": "8.6.7", "type": "regular" }
-  { "version": "8.6.8", "type": "regular" }
-  { "version": "8.6.9", "type": "regular" }
-  { "version": "8.6.10", "type": "regular" }
-  { "version": "8.6.11", "type": "regular" }
-  { "version": "10.0", "type": "full" }
-  { "version": "10.0.1", "type": "regular" }
-  { "version": "10.0.2", "type": "regular" }
-  { "version": "10.0.3", "type": "full" }
-  { "version": "10.0.4", "type": "regular" }
-  { "version": "10.0.5", "type": "regular" }
-  { "version": "10.0.6", "type": "regular" }
+  { "version": "8.6.7", "type": "regular" },
+  { "version": "8.6.8", "type": "regular" },
+  { "version": "8.6.9", "type": "regular" },
+  { "version": "8.6.10", "type": "regular" },
+  { "version": "8.6.11", "type": "regular" },
+  { "version": "10.0", "type": "full" },
+  { "version": "10.0.1", "type": "regular" },
+  { "version": "10.0.2", "type": "regular" },
+  { "version": "10.0.3", "type": "full" },
+  { "version": "10.0.4", "type": "regular" },
+  { "version": "10.0.5", "type": "regular" },
+  { "version": "10.0.6", "type": "regular" },
   { "version": "10.0.7", "type": "regular" }
   
 ]
