@@ -147,31 +147,9 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
 
 <script>
 (function(){
-  /* =====================================================================
-     ADMIN: maintain the release list here. This is the only place to edit.
-     Keep versions as "major.minor.patch" strings, type "full" or "regular".
-     Order does not matter; the page sorts them.
-     ===================================================================== */
-  const RELEASES = [
-    { version: "8.3.10", type: "regular" },
-    { version: "8.3.11", type: "regular" },
-    { version: "8.3.12", type: "regular" },
-    { version: "8.3.13", type: "regular" },
-    { version: "8.3.14", type: "regular" },
-    { version: "8.4.0",  type: "regular" },
-    { version: "8.4.1",  type: "regular" },
-    { version: "8.4.2",  type: "full" },
-    { version: "8.4.3",  type: "regular" },
-    { version: "8.4.4",  type: "regular" },
-    { version: "8.5.0",  type: "regular" },
-    { version: "8.5.1",  type: "regular" },
-    { version: "8.5.2",  type: "full" },
-    { version: "8.5.3",  type: "regular" },
-    { version: "8.5.4",  type: "full" },
-    { version: "8.5.5",  type: "regular" },
-    { version: "8.5.6",  type: "regular" }
-  ];
-  /* ===================== end of admin section ========================= */
+  // The release list is loaded from releases.json in the same folder.
+  // Admins maintain that file; this page only reads it.
+  const RELEASES_URL = "releases.json";
 
   const $ = id => document.getElementById(id);
   let fromSel = "", toSel = "";
@@ -184,7 +162,7 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     }
     return 0;
   }
-  const list = [...RELEASES].sort((a,b) => cmp(a.version,b.version));
+  let list = [];
   const label = t => t === "full" ? "Full Release" : "Regular Release";
 
   // Core rule set
@@ -282,9 +260,25 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
   $("to").addEventListener("change", e => { toSel = e.target.value; renderResult(); });
   window.addEventListener("resize", notifyFrame);
 
-  fillSelects();
-  renderResult();
-  try{ if(window.parent !== window) window.parent.postMessage({ action: "@webframe.ready" }, "*"); }catch(e){}
+  const VERSION_RE = /^\d+(\.\d+)*$/;
+  function validList(d){ return Array.isArray(d) && d.length > 1 && d.every(r => r && typeof r.version === "string" && VERSION_RE.test(r.version) && (r.type === "full" || r.type === "regular")); }
+
+  async function init(){
+    try{
+      const res = await fetch(RELEASES_URL + "?t=" + Date.now(), { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if(!validList(data)) throw new Error("releases.json is not a valid release list");
+      list = [...data].sort((a,b) => cmp(a.version,b.version));
+      fillSelects();
+      renderResult();
+    }catch(err){
+      $("result").innerHTML = `<p class="notice">The release list could not be loaded. Please try again later.</p>`;
+      console.error("Could not load releases.json:", err);
+    }
+    try{ if(window.parent !== window) window.parent.postMessage({ action: "@webframe.ready" }, "*"); }catch(e){}
+  }
+  init();
 })();
 </script>
 </body>
