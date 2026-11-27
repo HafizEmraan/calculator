@@ -4,16 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Upgrade path calculator</title>
-  <meta property="og:title" content="Upgrade path calculator">
+<meta property="og:title" content="Upgrade path calculator">
 <meta property="og:description" content="Find the supported upgrade path between two releases.">
 <meta property="og:url" content="https://hafizemraan.github.io/calculator/upgrade-path-calculator.html">
 <meta property="og:type" content="website">
-<meta name="twitter:card" content="player">
-<meta name="twitter:title" content="Upgrade path calculator">
-<meta name="twitter:player" content="https://hafizemraan.github.io/calculator/upgrade-path-calculator.html">
-<meta name="twitter:player:width" content="900">
-<meta name="twitter:player:height" content="1000">
-<link rel="iframely player" type="text/html" href="https://hafizemraan.github.io/calculator/upgrade-path-calculator.html" media="(aspect-ratio: 900/1000)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -100,8 +94,6 @@ select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-vis
 .rule h3{font-size:1rem; margin:0 0 4px}
 .rule p{color:var(--muted); font-size:.93rem}
 
-.catalog{margin-top:48px}
-.catalog .lede{margin-bottom:16px}
 .table-scroll{overflow-x:auto; background:var(--surface); border:1.5px solid var(--line); border-radius:12px; max-height:420px; overflow-y:auto}
 table{width:100%; border-collapse:collapse; font-size:.95rem}
 th,td{text-align:left; padding:9px 14px; border-bottom:1px solid var(--line)}
@@ -150,58 +142,39 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     <div class="rule"><h3>Several Full Releases in between</h3><p>Skip the older ones. Only the latest Full Release before the target is needed.</p></div>
   </div>
 
-  <section class="catalog">
-    <h2>Release list</h2>
-    <p class="lede">Edit this list to match your real releases. Changes are saved in this browser.</p>
-    <div class="table-scroll">
-      <table>
-        <thead><tr><th scope="col">Version</th><th scope="col">Type</th><th scope="col"><span class="sr">Actions</span></th></tr></thead>
-        <tbody id="rows"></tbody>
-      </table>
-    </div>
-    <div class="addrow">
-      <div class="field"><label for="newVersion">New version</label><input type="text" id="newVersion" placeholder="e.g. 8.5.7" inputmode="decimal" autocomplete="off"></div>
-      <div class="field"><label for="newType">Type</label><select id="newType"><option value="regular">Regular Release</option><option value="full">Full Release</option></select></div>
-      <button class="btn primary" id="addBtn" type="button">Add release</button>
-    </div>
-    <p class="msg" id="msg" role="status"></p>
-    <details>
-      <summary>Import or export as JSON</summary>
-      <textarea id="json" spellcheck="false" aria-label="Release list as JSON"></textarea>
-      <div class="json-actions">
-        <button class="btn primary" id="applyJson" type="button">Apply JSON</button>
-        <button class="btn" id="resetBtn" type="button">Reset to sample data</button>
-      </div>
-    </details>
-  </section>
+
 </main>
 
 <script>
 (function(){
-  const KEY = "upgrade-path-releases-v1";
-  const SAMPLE = [
-    ["8.3.10","regular"],["8.3.11","regular"],["8.3.12","regular"],["8.3.13","regular"],["8.3.14","regular"],
-    ["8.4.0","regular"],["8.4.1","regular"],["8.4.2","full"],["8.4.3","regular"],["8.4.4","regular"],
-    ["8.5.0","regular"],["8.5.1","regular"],["8.5.2","full"],["8.5.3","regular"],["8.5.4","full"],
-    ["8.5.5","regular"],["8.5.6","regular"]
-  ].map(([version,type]) => ({version,type}));
+  /* =====================================================================
+     ADMIN: maintain the release list here. This is the only place to edit.
+     Keep versions as "major.minor.patch" strings, type "full" or "regular".
+     Order does not matter; the page sorts them.
+     ===================================================================== */
+  const RELEASES = [
+    { version: "8.3.10", type: "regular" },
+    { version: "8.3.11", type: "regular" },
+    { version: "8.3.12", type: "regular" },
+    { version: "8.3.13", type: "regular" },
+    { version: "8.3.14", type: "regular" },
+    { version: "8.4.0",  type: "regular" },
+    { version: "8.4.1",  type: "regular" },
+    { version: "8.4.2",  type: "full" },
+    { version: "8.4.3",  type: "regular" },
+    { version: "8.4.4",  type: "regular" },
+    { version: "8.5.0",  type: "regular" },
+    { version: "8.5.1",  type: "regular" },
+    { version: "8.5.2",  type: "full" },
+    { version: "8.5.3",  type: "regular" },
+    { version: "8.5.4",  type: "full" },
+    { version: "8.5.5",  type: "regular" },
+    { version: "8.5.6",  type: "regular" }
+  ];
+  /* ===================== end of admin section ========================= */
 
   const $ = id => document.getElementById(id);
-  const VERSION_RE = /^\d+(\.\d+)*$/;
-  let releases = load();
-  let fromSel = "8.3.12", toSel = "8.5.6";
-
-  function load(){
-    try{
-      const raw = localStorage.getItem(KEY);
-      if(raw){ const data = JSON.parse(raw); if(valid(data)) return data; }
-    }catch(e){}
-    return SAMPLE.map(r => ({...r}));
-  }
-  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(releases)); }catch(e){} }
-  function valid(data){
-    return Array.isArray(data) && data.every(r => r && typeof r.version === "string" && VERSION_RE.test(r.version) && (r.type === "full" || r.type === "regular"));
-  }
+  let fromSel = "", toSel = "";
 
   function cmp(a,b){
     const x = a.split(".").map(Number), y = b.split(".").map(Number);
@@ -211,12 +184,11 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     }
     return 0;
   }
-  const sorted = () => [...releases].sort((a,b) => cmp(a.version,b.version));
+  const list = [...RELEASES].sort((a,b) => cmp(a.version,b.version));
   const label = t => t === "full" ? "Full Release" : "Regular Release";
 
   // Core rule set
   function computePath(fromV,toV){
-    const list = sorted();
     const from = list.find(r => r.version === fromV);
     const to = list.find(r => r.version === toV);
     const c = cmp(toV,fromV);
@@ -227,17 +199,15 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     const stops = [from];
     if(to.type !== "full" && fulls.length) stops.push(fulls[fulls.length-1]);
     stops.push(to);
-    return {status:"ok", from, to, stops, range:[from,...between,to], list};
+    return {status:"ok", from, to, stops, range:[from,...between,to]};
   }
 
   function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
   function plural(n,word){ return n + " " + word + (n === 1 ? "" : "s"); }
 
   function fillSelects(){
-    const list = sorted();
     const versions = list.map(r => r.version);
-    if(!versions.includes(fromSel)) fromSel = versions[0] || "";
-    if(!versions.includes(toSel)) toSel = versions[versions.length-1] || "";
+    fromSel = versions[0]; toSel = versions[versions.length-1];
     const opts = list.map(r => `<option value="${esc(r.version)}">${esc(r.version)}${r.type === "full" ? " (Full Release)" : ""}</option>`).join("");
     $("from").innerHTML = opts; $("to").innerHTML = opts;
     $("from").value = fromSel; $("to").value = toSel;
@@ -245,18 +215,14 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
 
   function renderResult(){
     const el = $("result");
-    if(releases.length < 2){
-      el.innerHTML = `<p class="notice">Add at least two releases to the list below to calculate a path.</p>`;
-      return;
-    }
     const r = computePath(fromSel,toSel);
     if(r.status === "same"){
-      el.innerHTML = `<div class="route"><span>${esc(r.from.version)}</span></div><p class="summary">The client is already on this version. No upgrade needed.</p>`;
-      return;
+      el.innerHTML = `<div class="route"><span>${esc(r.from.version)}</span></div><p class="summary">You are already on this version. No upgrade needed.</p>`;
+      notifyFrame(); return;
     }
     if(r.status === "down"){
       el.innerHTML = `<p class="notice">Downgrades aren’t supported. Choose a target version newer than ${esc(r.from.version)}.</p>`;
-      return;
+      notifyFrame(); return;
     }
     const stops = r.stops;
     const mid = stops.length - 2;
@@ -280,7 +246,7 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     const steps = [];
     for(let i = 1; i < stops.length; i++){
       const a = stops[i-1], b = stops[i];
-      const inc = r.list.filter(x => cmp(x.version,a.version) > 0 && cmp(x.version,b.version) < 0);
+      const inc = list.filter(x => cmp(x.version,a.version) > 0 && cmp(x.version,b.version) < 0);
       const regs = inc.filter(x => x.type === "regular").length;
       const fulls = inc.filter(x => x.type === "full");
       let incText = inc.length === 0 ? "No releases skipped." : `Includes ${plural(regs,"Regular Release")}`;
@@ -300,63 +266,25 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
         <span><i></i>Regular Release, included automatically</span>
       </div>
       <ol class="steps">${steps.join("")}</ol>`;
+    notifyFrame();
   }
 
-  function renderTable(){
-    $("rows").innerHTML = sorted().map(r => `
-      <tr>
-        <td class="v">${esc(r.version)}</td>
-        <td><button type="button" class="typebtn" data-toggle="${esc(r.version)}" aria-pressed="${r.type === "full"}">${r.type === "full" ? "Full" : "Regular"}</button></td>
-        <td><button type="button" class="linkbtn" data-remove="${esc(r.version)}" aria-label="Remove ${esc(r.version)}">Remove</button></td>
-      </tr>`).join("");
-    $("json").value = JSON.stringify(sorted(), null, 2);
+  // Tell a GitBook webframe how tall the content is, so the block fits without scrollbars.
+  function notifyFrame(){
+    if(window.parent === window) return;
+    try{
+      const h = document.documentElement.scrollHeight, w = document.documentElement.clientWidth || 900;
+      window.parent.postMessage({ action: "@webframe.resize", size: { aspectRatio: w / h, maxHeight: h } }, "*");
+    }catch(e){}
   }
-
-  function renderAll(){ fillSelects(); renderTable(); renderResult(); }
-  function setMsg(t){ $("msg").textContent = t; }
 
   $("from").addEventListener("change", e => { fromSel = e.target.value; renderResult(); });
   $("to").addEventListener("change", e => { toSel = e.target.value; renderResult(); });
+  window.addEventListener("resize", notifyFrame);
 
-  $("rows").addEventListener("click", e => {
-    const t = e.target.closest("button"); if(!t) return;
-    if(t.dataset.toggle){
-      const r = releases.find(x => x.version === t.dataset.toggle);
-      r.type = r.type === "full" ? "regular" : "full";
-      setMsg(`${r.version} is now a ${label(r.type)}.`);
-    } else if(t.dataset.remove){
-      releases = releases.filter(x => x.version !== t.dataset.remove);
-      setMsg(`Removed ${t.dataset.remove}.`);
-    }
-    save(); renderAll();
-  });
-
-  $("addBtn").addEventListener("click", () => {
-    const v = $("newVersion").value.trim();
-    if(!VERSION_RE.test(v)){ setMsg("Enter a version made of numbers and dots, like 8.5.7."); return; }
-    if(releases.some(x => cmp(x.version,v) === 0)){ setMsg(`${v} is already in the list.`); return; }
-    releases.push({version:v, type:$("newType").value});
-    $("newVersion").value = "";
-    save(); renderAll(); setMsg(`Added ${v}.`);
-  });
-  $("newVersion").addEventListener("keydown", e => { if(e.key === "Enter") $("addBtn").click(); });
-
-  $("applyJson").addEventListener("click", () => {
-    try{
-      const data = JSON.parse($("json").value);
-      if(!valid(data)){ setMsg("Each entry needs a numeric version and a type of “full” or “regular”."); return; }
-      const seen = new Set(data.map(d => d.version));
-      if(seen.size !== data.length){ setMsg("The JSON contains duplicate versions."); return; }
-      releases = data.map(d => ({version:d.version, type:d.type}));
-      save(); renderAll(); setMsg(`Applied ${plural(releases.length,"release")}.`);
-    }catch(err){ setMsg("That isn’t valid JSON. Check for missing commas or quotes."); }
-  });
-  $("resetBtn").addEventListener("click", () => {
-    releases = SAMPLE.map(r => ({...r})); fromSel = "8.3.12"; toSel = "8.5.6";
-    save(); renderAll(); setMsg("Restored the sample release list.");
-  });
-
-  renderAll();
+  fillSelects();
+  renderResult();
+  try{ if(window.parent !== window) window.parent.postMessage({ action: "@webframe.ready" }, "*"); }catch(e){}
 })();
 </script>
 </body>
