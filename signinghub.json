@@ -1,0 +1,10 @@
+[
+  { "version": "8.0",   "type": "full" },
+  { "version": "8.1",   "type": "full" },
+  { "version": "8.2",   "type": "full" },
+  { "version": "8.3",   "type": "full" },
+  { "version": "8.3.1", "type": "regular" },
+  { "version": "8.3.2", "type": "regular" },
+  { "version": "8.4",   "type": "full" },
+  { "version": "8.4.1", "type": "regular" }
+]

@@ -1,0 +1,8 @@
+[
+  { "version": "2.0",   "type": "full" },
+  { "version": "2.1",   "type": "full" },
+  { "version": "2.1.1", "type": "regular" },
+  { "version": "2.2",   "type": "full" },
+  { "version": "2.2.1", "type": "regular" },
+  { "version": "2.2.2", "type": "regular" }
+]

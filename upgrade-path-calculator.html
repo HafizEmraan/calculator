@@ -3,22 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Upgrade path calculator</title>
-<meta property="og:title" content="Upgrade path calculator">
+<title>Determining the Upgrade Path</title>
+<meta property="og:title" content="Determining the Upgrade Path">
 <meta property="og:description" content="Find the supported upgrade path between two releases.">
 <meta property="og:url" content="https://hafizemraan.github.io/calculator/upgrade-path-calculator.html">
 <meta property="og:type" content="website">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#EEF1F4; --surface:#FFFFFF; --ink:#18202B; --muted:#5B6676; --line:#D3D9E1;
   --path:#2742B0; --path-soft:#DFE5FA; --full:#0E6B66; --full-soft:#D7EDEA; --warn:#9A4A00; --warn-soft:#FBEBDD;
-  color-scheme:light;
-  box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
@@ -34,41 +32,42 @@
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family:"Schibsted Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  font-size:16px; line-height:1.5; font-variant-numeric:tabular-nums;
-}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; font-size:16px; line-height:1.5; font-variant-numeric:tabular-nums}
 .wrap{max-width:960px; margin:0 auto; padding:40px 20px 64px}
-h1{font-size:clamp(1.9rem,4vw,2.6rem); line-height:1.1; letter-spacing:-0.02em; margin:0 0 10px; font-weight:700}
-h2{font-size:1.25rem; margin:0 0 6px; letter-spacing:-0.01em}
+h1{font-size:clamp(1.8rem,4vw,2.4rem); line-height:1.1; letter-spacing:-0.02em; margin:0 0 12px; font-weight:700}
 p{margin:0}
-.lede{color:var(--muted); max-width:62ch}
+.lede{color:var(--muted); max-width:68ch}
+.lede + .lede{margin-top:8px}
 
-.pickers{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:32px 0 0}
+.pickers{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:28px 0 0}
 .field label{display:block; font-weight:600; font-size:.9rem; margin-bottom:6px}
-select,input[type=text],textarea{
-  width:100%; font:inherit; color:var(--ink); background:var(--surface);
-  border:1.5px solid var(--line); border-radius:8px; padding:11px 12px;
-}
-select{font-size:1.1rem; font-weight:600}
-select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--path); outline-offset:2px}
+select{width:100%; font:inherit; font-size:1.05rem; font-weight:500; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:8px; padding:11px 12px}
+select:disabled{opacity:.55; cursor:not-allowed}
+select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--path); outline-offset:2px}
 
-.result{margin-top:28px; background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:28px 24px}
-.route{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; font-size:clamp(1.6rem,5vw,2.5rem); font-weight:700; letter-spacing:-0.02em; line-height:1.15}
+.status{margin-top:12px; min-height:1.5em; font-size:.92rem; color:var(--muted)}
+.status.err{color:var(--warn)}
+
+.result{margin-top:24px; background:var(--surface); border:1.5px solid var(--line); border-radius:14px; padding:28px 24px}
+.result[hidden]{display:none}
+.result-head{display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px}
+.product-tag{font-size:.85rem; font-weight:600; color:var(--muted); letter-spacing:.02em; text-transform:uppercase}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+.btn{font:inherit; font-size:.9rem; font-weight:600; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); padding:7px 12px; border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; gap:6px}
+.btn svg{width:16px; height:16px}
+.route{display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 14px; font-size:clamp(1.5rem,5vw,2.4rem); font-weight:700; letter-spacing:-0.02em; line-height:1.15}
 .route .arrow{color:var(--muted); font-weight:400}
 .route .via{color:var(--full)}
 .summary{margin-top:10px; color:var(--muted)}
-.notice{margin-top:4px; padding:12px 14px; border-radius:8px; background:var(--warn-soft); color:var(--warn); font-weight:500}
+.notice{padding:12px 14px; border-radius:8px; background:var(--warn-soft); color:var(--warn); font-weight:500}
 
 .track-scroll{overflow-x:auto; margin:28px -8px 0; padding:4px 8px 6px}
 .track{list-style:none; margin:0; padding:0; display:flex; position:relative; min-width:max-content}
-.track li{position:relative; display:flex; flex-direction:column; align-items:center; width:74px; flex:0 0 74px}
+.track li{position:relative; display:flex; flex-direction:column; align-items:center; width:80px; flex:0 0 80px}
 .track li::before{content:""; position:absolute; top:13px; left:0; right:0; height:2px; background:var(--line)}
 .track li:first-child::before{left:50%}
 .track li:last-child::before{right:50%}
 .track li.on-path::before{background:var(--path)}
-.track li.on-path.end::before{right:50%}
 .mark{position:relative; z-index:1; width:12px; height:12px; margin-top:8px; border-radius:50%; background:var(--surface); border:2px solid var(--muted)}
 .full .mark{border-radius:2px; border-color:var(--full); background:var(--full-soft)}
 .stop .mark{width:24px; height:24px; margin-top:2px; background:var(--path); border-color:var(--path)}
@@ -93,66 +92,80 @@ select:focus-visible,input:focus-visible,textarea:focus-visible,button:focus-vis
 .rule{border-left:3px solid var(--full); padding:2px 0 2px 14px}
 .rule h3{font-size:1rem; margin:0 0 4px}
 .rule p{color:var(--muted); font-size:.93rem}
+.foot{margin-top:28px; font-size:.85rem; color:var(--muted)}
+.foot a{color:var(--path)}
 
-.table-scroll{overflow-x:auto; background:var(--surface); border:1.5px solid var(--line); border-radius:12px; max-height:420px; overflow-y:auto}
-table{width:100%; border-collapse:collapse; font-size:.95rem}
-th,td{text-align:left; padding:9px 14px; border-bottom:1px solid var(--line)}
-th{position:sticky; top:0; background:var(--surface); font-size:.85rem; color:var(--muted); font-weight:600; z-index:1}
-tr:last-child td{border-bottom:0}
-td.v{font-weight:600}
-button{font:inherit; cursor:pointer; border-radius:8px}
-.btn{border:1.5px solid var(--line); background:var(--surface); color:var(--ink); padding:8px 14px; font-weight:600}
-.btn.primary{background:var(--path); border-color:var(--path); color:var(--surface)}
-.typebtn{border:1.5px solid var(--line); background:transparent; color:var(--muted); padding:4px 12px; font-size:.85rem; font-weight:600; min-width:84px}
-.typebtn[aria-pressed="true"]{background:var(--full-soft); border-color:var(--full); color:var(--full)}
-.linkbtn{background:none; border:0; color:var(--muted); padding:4px 6px; text-decoration:underline; font-size:.88rem}
-.addrow{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px; align-items:end}
-.addrow .field{flex:1 1 160px}
-.addrow select{font-size:1rem; font-weight:500}
-.msg{min-height:1.5em; margin-top:8px; font-size:.9rem; color:var(--warn)}
-details{margin-top:20px}
-summary{cursor:pointer; font-weight:600}
-textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
-.json-actions{display:flex; flex-wrap:wrap; gap:10px; margin-top:10px}
-.sr{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
-@media (max-width:560px){ .pickers{grid-template-columns:1fr} .result{padding:22px 16px} }
+@media (max-width:720px){ .pickers{grid-template-columns:1fr} .result{padding:22px 16px} }
+
+@media print{
+  :root{--bg:#fff; --surface:#fff; --ink:#111; --muted:#555; --line:#bbb; --path:#1F3A9E; --path-soft:#E4E9F8; --full:#0B5A55; --full-soft:#DCEEEB; color-scheme:light}
+  body{background:#fff}
+  .wrap{padding:0; max-width:none}
+  .pickers,.status,.rules,.foot,.actions{display:none !important}
+  .result{border:0; padding:0; break-inside:avoid}
+  .track-scroll{overflow:visible}
+  .track{flex-wrap:wrap}
+}
 </style>
 </head>
 <body>
 <main class="wrap">
-  <h1>Upgrade path calculator</h1>
-  <p class="lede">Pick the version a client runs today and the version they want. The path stops only where a Full Release is required; Regular Releases in between are already part of the next release you install.</p>
+  <h1>Determining the Upgrade Path</h1>
+  <p class="lede" id="intro">This explains the steps to follow to determine the path you need to take to update your version of the product.</p>
+  <p class="lede">This section explains the principles to follow to determine whether you can perform the update directly or must update first to a Full Release version.</p>
 
   <div class="pickers">
     <div class="field">
+      <label for="product">Product</label>
+      <select id="product"><option value="">Select a product</option></select>
+    </div>
+    <div class="field">
       <label for="from">Current version</label>
-      <select id="from"></select>
+      <select id="from" disabled><option value="">Select a product first</option></select>
     </div>
     <div class="field">
       <label for="to">Target version</label>
-      <select id="to"></select>
+      <select id="to" disabled><option value="">Select a product first</option></select>
     </div>
   </div>
+  <p class="status" id="status" role="status"></p>
 
-  <section class="result" id="result" aria-live="polite"></section>
+  <section class="result" id="result" aria-live="polite" hidden>
+    <div class="result-head">
+      <span class="product-tag" id="productTag"></span>
+      <div class="actions">
+        <button class="btn" type="button" id="saveImg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Save as image</button>
+        <button class="btn" type="button" id="savePdf"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Export as PDF</button>
+      </div>
+    </div>
+    <div id="resultBody"></div>
+  </section>
 
   <div class="rules">
     <div class="rule"><h3>Full Release as target</h3><p>Upgrade directly. A Full Release contains every release before it.</p></div>
     <div class="rule"><h3>Regular Release as target</h3><p>If a Full Release lies in between, install the latest one first, then the target.</p></div>
     <div class="rule"><h3>Several Full Releases in between</h3><p>Skip the older ones. Only the latest Full Release before the target is needed.</p></div>
   </div>
-
-
+  <p class="foot" id="foot"></p>
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 (function(){
-  // The release list is loaded from releases.json in the same folder.
-  // Admins maintain that file; this page only reads it.
-  const RELEASES_URL = "releases.json";
+  /* =====================================================================
+     ADMIN: products and the JSON file that holds each product's releases.
+     The JSON files live in the same folder as this page.
+     ===================================================================== */
+  const PRODUCTS = [
+    { id: "adss-server",       name: "ADSS Server",        file: "adss-server.json" },
+    { id: "signinghub",        name: "SigningHub",         file: "signinghub.json" },
+    { id: "adss-webra-server", name: "ADSS Web RA Server", file: "adss-webra-server.json" }
+  ];
+  /* ===================== end of admin section ========================= */
 
   const $ = id => document.getElementById(id);
-  let fromSel = "", toSel = "";
+  const VERSION_RE = /^\d+(\.\d+)*$/;
+  let product = null, list = [], fromSel = "", toSel = "";
 
   function cmp(a,b){
     const x = a.split(".").map(Number), y = b.split(".").map(Number);
@@ -162,8 +175,12 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     }
     return 0;
   }
-  let list = [];
+  const v = s => "v" + s;
   const label = t => t === "full" ? "Full Release" : "Regular Release";
+  function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
+  function plural(n,word){ return n + " " + word + (n === 1 ? "" : "s"); }
+  function validList(d){ return Array.isArray(d) && d.length > 1 && d.every(r => r && typeof r.version === "string" && VERSION_RE.test(r.version) && (r.type === "full" || r.type === "regular")); }
+  function setStatus(t, err){ $("status").textContent = t || ""; $("status").className = "status" + (err ? " err" : ""); }
 
   // Core rule set
   function computePath(fromV,toV){
@@ -180,45 +197,75 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     return {status:"ok", from, to, stops, range:[from,...between,to]};
   }
 
-  function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch])); }
-  function plural(n,word){ return n + " " + word + (n === 1 ? "" : "s"); }
-
-  function fillSelects(){
-    const versions = list.map(r => r.version);
-    fromSel = versions[0]; toSel = versions[versions.length-1];
-    const opts = list.map(r => `<option value="${esc(r.version)}">${esc(r.version)}${r.type === "full" ? " (Full Release)" : ""}</option>`).join("");
-    $("from").innerHTML = opts; $("to").innerHTML = opts;
-    $("from").value = fromSel; $("to").value = toSel;
+  function fillProducts(){
+    $("product").innerHTML = `<option value="">Select a product</option>` + PRODUCTS.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
   }
 
-  function renderResult(){
-    const el = $("result");
-    const r = computePath(fromSel,toSel);
+  function fillVersions(){
+    const opts = `<option value="">Select a version</option>` + list.map(r => `<option value="${esc(r.version)}">${esc(v(r.version))} (${label(r.type)})</option>`).join("");
+    $("from").innerHTML = opts; $("to").innerHTML = opts;
+    $("from").disabled = false; $("to").disabled = false;
+    fromSel = ""; toSel = "";
+  }
+
+  function resetVersions(msg){
+    list = []; fromSel = ""; toSel = "";
+    $("from").innerHTML = `<option value="">${esc(msg)}</option>`; $("to").innerHTML = `<option value="">${esc(msg)}</option>`;
+    $("from").disabled = true; $("to").disabled = true;
+    hideResult();
+  }
+
+  function hideResult(){ $("result").hidden = true; $("resultBody").innerHTML = ""; notifyFrame(); }
+
+  async function loadProduct(id){
+    product = PRODUCTS.find(p => p.id === id) || null;
+    hideResult();
+    if(!product){
+      resetVersions("Select a product first"); setStatus("");
+      $("intro").textContent = "This explains the steps to follow to determine the path you need to take to update your version of the product.";
+      return;
+    }
+    $("intro").textContent = `This explains the steps to follow to determine the path you need to take to update your version of ${product.name}.`;
+    resetVersions("Loading versions…"); setStatus(`Loading ${product.name} releases…`);
+    try{
+      const res = await fetch(product.file + "?t=" + Date.now(), { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if(!validList(data)) throw new Error("invalid release list");
+      const seen = new Set();
+      list = data.filter(r => seen.has(r.version) ? false : seen.add(r.version)).sort((a,b) => cmp(a.version,b.version));
+      fillVersions(); setStatus("");
+    }catch(err){
+      resetVersions("Versions unavailable");
+      setStatus(`The release list for ${product.name} could not be loaded. Please try again later.`, true);
+      console.error(err);
+    }
+    notifyFrame();
+  }
+
+  function render(){
+    if(!product || !fromSel || !toSel){ hideResult(); return; }
+    const el = $("resultBody"), r = computePath(fromSel,toSel);
+    $("productTag").textContent = product.name;
+    $("result").hidden = false;
     if(r.status === "same"){
-      el.innerHTML = `<div class="route"><span>${esc(r.from.version)}</span></div><p class="summary">You are already on this version. No upgrade needed.</p>`;
+      el.innerHTML = `<div class="route"><span>${esc(v(r.from.version))}</span></div><p class="summary">You are already on this version. No upgrade needed.</p>`;
       notifyFrame(); return;
     }
     if(r.status === "down"){
-      el.innerHTML = `<p class="notice">Downgrades aren’t supported. Choose a target version newer than ${esc(r.from.version)}.</p>`;
+      el.innerHTML = `<p class="notice">Downgrades aren’t supported. Choose a target version newer than ${esc(v(r.from.version))}.</p>`;
       notifyFrame(); return;
     }
-    const stops = r.stops;
-    const mid = stops.length - 2;
-    const route = stops.map((s,i) => {
-      const cls = (i > 0 && i < stops.length-1) ? "via" : "";
-      return (i ? `<span class="arrow" aria-hidden="true">→</span>` : "") + `<span class="${cls}">${esc(s.version)}</span>`;
-    }).join("");
-    const summary = mid === 0
-      ? "Direct upgrade. No intermediate release needed."
-      : `${plural(mid,"intermediate step")}: install Full Release ${esc(stops[1].version)} first.`;
+    const stops = r.stops, mid = stops.length - 2;
+    const route = stops.map((s,i) => (i ? `<span class="arrow" aria-hidden="true">→</span>` : "") + `<span class="${(i > 0 && i < stops.length-1) ? "via" : ""}">${esc(v(s.version))}</span>`).join("");
+    const summary = mid === 0 ? "Direct upgrade. No intermediate release needed." : `${plural(mid,"intermediate step")}: install Full Release ${esc(v(stops[1].version))} first.`;
 
-    const stopSet = new Set(stops.map(s => s.version));
-    const toIdx = r.range.length - 1;
+    const stopSet = new Set(stops.map(s => s.version)), toIdx = r.range.length - 1;
     const track = r.range.map((n,i) => {
       const isStop = stopSet.has(n.version);
       const cls = [n.type === "full" ? "full" : "", isStop ? "stop" : "", "on-path", i === toIdx ? "end" : ""].join(" ");
       const tag = isStop ? (i === 0 ? "current" : i === toIdx ? "target" : "required") : "included";
-      return `<li class="${cls}"><span class="mark" aria-hidden="true"></span><span class="vlabel">${esc(n.version)}</span><span class="tlabel">${tag}</span></li>`;
+      return `<li class="${cls}"><span class="mark" aria-hidden="true"></span><span class="vlabel">${esc(v(n.version))}</span><span class="tlabel">${tag}</span></li>`;
     }).join("");
 
     const steps = [];
@@ -228,23 +275,36 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
       const regs = inc.filter(x => x.type === "regular").length;
       const fulls = inc.filter(x => x.type === "full");
       let incText = inc.length === 0 ? "No releases skipped." : `Includes ${plural(regs,"Regular Release")}`;
-      if(inc.length){
-        incText += fulls.length ? ` and ${plural(fulls.length,"earlier Full Release")} (${fulls.map(f => esc(f.version)).join(", ")}), all applied automatically.` : ", applied automatically.";
-      }
-      steps.push(`<li><strong>Upgrade ${esc(a.version)} to ${esc(b.version)} (${label(b.type)})</strong><span class="inc">${incText}</span></li>`);
+      if(inc.length) incText += fulls.length ? ` and ${plural(fulls.length,"earlier Full Release")} (${fulls.map(f => esc(v(f.version))).join(", ")}), all applied automatically.` : ", applied automatically.";
+      steps.push(`<li><strong>Upgrade ${esc(v(a.version))} to ${esc(v(b.version))} (${label(b.type)})</strong><span class="inc">${incText}</span></li>`);
     }
 
     el.innerHTML = `
       <div class="route">${route}</div>
       <p class="summary">${summary}</p>
-      <div class="track-scroll"><ol class="track" aria-label="Releases from ${esc(r.from.version)} to ${esc(r.to.version)}">${track}</ol></div>
-      <div class="legend">
-        <span><i class="s"></i>Install</span>
-        <span><i class="f"></i>Full Release</span>
-        <span><i></i>Regular Release, included automatically</span>
-      </div>
+      <div class="track-scroll"><ol class="track" aria-label="Releases from ${esc(v(r.from.version))} to ${esc(v(r.to.version))}">${track}</ol></div>
+      <div class="legend"><span><i class="s"></i>Install</span><span><i class="f"></i>Full Release</span><span><i></i>Regular Release, included automatically</span></div>
       <ol class="steps">${steps.join("")}</ol>`;
     notifyFrame();
+  }
+
+  function fileBase(){ return `upgrade-path-${product.name.replace(/\s+/g,"-")}-${v(fromSel)}-to-${v(toSel)}`; }
+
+  async function saveImage(){
+    if(!window.html2canvas){ setStatus("Image export isn’t available right now.", true); return; }
+    const el = $("result"), bg = getComputedStyle(document.body).getPropertyValue("--surface").trim() || "#fff";
+    try{
+      const canvas = await html2canvas(el, { backgroundColor: bg, scale: 2, useCORS: true, ignoreElements: n => n.classList && n.classList.contains("actions") });
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png"); a.download = fileBase() + ".png";
+      document.body.appendChild(a); a.click(); a.remove();
+    }catch(err){ setStatus("Couldn’t create the image. Try opening the calculator in a new tab and saving from there.", true); console.error(err); }
+  }
+
+  function savePdf(){
+    const old = document.title; document.title = fileBase();
+    window.print();
+    setTimeout(() => { document.title = old; }, 1000);
   }
 
   // Tell a GitBook webframe how tall the content is, so the block fits without scrollbars.
@@ -256,29 +316,18 @@ textarea{min-height:180px; font-size:.88rem; margin-top:10px; resize:vertical}
     }catch(e){}
   }
 
-  $("from").addEventListener("change", e => { fromSel = e.target.value; renderResult(); });
-  $("to").addEventListener("change", e => { toSel = e.target.value; renderResult(); });
+  $("product").addEventListener("change", e => loadProduct(e.target.value));
+  $("from").addEventListener("change", e => { fromSel = e.target.value; render(); });
+  $("to").addEventListener("change", e => { toSel = e.target.value; render(); });
+  $("saveImg").addEventListener("click", saveImage);
+  $("savePdf").addEventListener("click", savePdf);
   window.addEventListener("resize", notifyFrame);
 
-  const VERSION_RE = /^\d+(\.\d+)*$/;
-  function validList(d){ return Array.isArray(d) && d.length > 1 && d.every(r => r && typeof r.version === "string" && VERSION_RE.test(r.version) && (r.type === "full" || r.type === "regular")); }
-
-  async function init(){
-    try{
-      const res = await fetch(RELEASES_URL + "?t=" + Date.now(), { cache: "no-store" });
-      if(!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      if(!validList(data)) throw new Error("releases.json is not a valid release list");
-      list = [...data].sort((a,b) => cmp(a.version,b.version));
-      fillSelects();
-      renderResult();
-    }catch(err){
-      $("result").innerHTML = `<p class="notice">The release list could not be loaded. Please try again later.</p>`;
-      console.error("Could not load releases.json:", err);
-    }
-    try{ if(window.parent !== window) window.parent.postMessage({ action: "@webframe.ready" }, "*"); }catch(e){}
+  fillProducts();
+  if(window.parent !== window){
+    $("foot").innerHTML = `Having trouble saving? <a href="${esc(location.href.split("#")[0])}" target="_blank" rel="noopener">Open the calculator in a new tab</a>.`;
+    try{ window.parent.postMessage({ action: "@webframe.ready" }, "*"); }catch(e){}
   }
-  init();
 })();
 </script>
 </body>
