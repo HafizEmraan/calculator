@@ -40,6 +40,8 @@ p{margin:0}
 .lede + .lede{margin-top:8px}
 
 .pickers{display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin:28px 0 0}
+.pickers.has-variant{grid-template-columns:repeat(4,1fr)}
+.field[hidden]{display:none}
 .field label{display:block; font-weight:600; font-size:.9rem; margin-bottom:6px}
 select{width:100%; font:inherit; font-size:1.05rem; font-weight:500; color:var(--ink); background:var(--surface); border:1.5px solid var(--line); border-radius:8px; padding:11px 12px}
 select:disabled{opacity:.55; cursor:not-allowed}
@@ -100,7 +102,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
 .result.exporting .track li{flex:0 0 84px; width:84px}
 .result.exporting .actions{visibility:hidden}
 
-@media (max-width:720px){ .pickers{grid-template-columns:1fr} .result{padding:22px 16px} }
+@media (max-width:720px){ .pickers,.pickers.has-variant{grid-template-columns:1fr} .result{padding:22px 16px} }
 
 @media print{
   :root{--bg:#fff; --surface:#fff; --ink:#111; --muted:#555; --line:#bbb; --path:#1F3A9E; --path-soft:#E4E9F8; --full:#0B5A55; --full-soft:#DCEEEB; color-scheme:light}
@@ -123,6 +125,10 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
     <div class="field">
       <label for="product">Product</label>
       <select id="product"><option value="">Select a product</option></select>
+    </div>
+    <div class="field" id="variantField" hidden>
+      <label for="variant">Platform</label>
+      <select id="variant"><option value="">Select a platform</option></select>
     </div>
     <div class="field">
       <label for="from">Current version</label>
@@ -166,11 +172,18 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
     { id: "signinghub",        name: "SigningHub",         file: "signinghub.json" },
     { id: "adss-webra-server", name: "ADSS Web RA Server", file: "adss-webra-server.json" }
   ];
+  // Display names for platform keys used inside a product's JSON file.
+  // A key without an entry here is shown as written.
+  const VARIANT_LABELS = {
+    "windows-mssql": "Windows with MS SQL Server",
+    "linux-mssql":   "Linux with MS SQL Server",
+    "pgsql":         "PostgreSQL"
+  };
   /* ===================== end of admin section ========================= */
 
   const $ = id => document.getElementById(id);
   const VERSION_RE = /^\d+(\.\d+)*$/;
-  let product = null, list = [], fromSel = "", toSel = "";
+  let product = null, variants = null, variantSel = "", list = [], fromSel = "", toSel = "";
 
   function cmp(a,b){
     const x = a.split(".").map(Number), y = b.split(".").map(Number);
@@ -230,11 +243,27 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
 
   function hideResult(){ $("result").hidden = true; $("resultBody").innerHTML = ""; notifyFrame(); }
 
+  function applyList(data){
+    const seen = new Set();
+    list = data.filter(r => seen.has(r.version) ? false : seen.add(r.version)).sort((a,b) => cmp(a.version,b.version));
+    fromSel = ""; toSel = ""; fillVersions();
+  }
+  function showVariant(){
+    variantSel = "";
+    $("variant").innerHTML = `<option value="">Select a platform</option>` + Object.keys(variants).map(k => `<option value="${esc(k)}">${esc(VARIANT_LABELS[k] || k)}</option>`).join("");
+    $("variantField").hidden = false; document.querySelector(".pickers").classList.add("has-variant");
+  }
+  function hideVariant(){
+    variants = null; variantSel = "";
+    $("variantField").hidden = true; document.querySelector(".pickers").classList.remove("has-variant");
+  }
+  function variantLabel(){ return variants && variantSel ? (VARIANT_LABELS[variantSel] || variantSel) : ""; }
+
   async function loadProduct(id){
     product = PRODUCTS.find(p => p.id === id) || null;
     hideResult();
     if(!product){
-      resetVersions("Select a product first"); setStatus("");
+      hideVariant(); resetVersions("Select a product first"); setStatus("");
       $("intro").textContent = "This explains the steps to follow to determine the path you need to take to update your version of the product.";
       return;
     }
@@ -244,10 +273,14 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
       const res = await fetch(product.file + "?t=" + Date.now(), { cache: "no-store" });
       if(!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
-      if(!validList(data)) throw new Error("invalid release list");
-      const seen = new Set();
-      list = data.filter(r => seen.has(r.version) ? false : seen.add(r.version)).sort((a,b) => cmp(a.version,b.version));
-      fromSel = ""; toSel = ""; fillVersions(); setStatus("");
+      if(Array.isArray(data)){
+        variants = null; hideVariant();
+        applyList(data);
+      } else if(data && typeof data === "object" && Object.keys(data).length && Object.values(data).every(validList)){
+        variants = data; showVariant();
+        resetVersions("Select a platform first");
+      } else throw new Error("invalid release list");
+      setStatus("");
     }catch(err){
       resetVersions("Versions unavailable");
       setStatus(`The release list for ${product.name} could not be loaded. Please try again later.`, true);
@@ -257,9 +290,9 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
   }
 
   function render(){
-    if(!product || !fromSel || !toSel){ hideResult(); return; }
+    if(!product || (variants && !variantSel) || !fromSel || !toSel){ hideResult(); return; }
     const el = $("resultBody"), r = computePath(fromSel,toSel);
-    $("productTag").textContent = product.name;
+    $("productTag").textContent = product.name + (variantLabel() ? " · " + variantLabel() : "");
     $("result").hidden = false;
     if(r.status === "same"){
       el.innerHTML = `<div class="route"><span>${esc(v(r.from.version))}</span></div><p class="summary">You are already on this version. No upgrade needed.</p>`;
@@ -301,7 +334,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
     notifyFrame();
   }
 
-  function fileBase(){ return `upgrade-path-${product.name.replace(/\s+/g,"-")}-${v(fromSel)}-to-${v(toSel)}`; }
+  function fileBase(){ return `upgrade-path-${(product.name + (variantSel ? "-" + variantSel : "")).replace(/\s+/g,"-")}-${v(fromSel)}-to-${v(toSel)}`; }
 
   async function saveImage(){
     if(!window.html2canvas){ setStatus("Image export isn’t available right now.", true); return; }
@@ -339,6 +372,11 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
   }
 
   $("product").addEventListener("change", e => loadProduct(e.target.value));
+  $("variant").addEventListener("change", e => {
+    variantSel = e.target.value; hideResult();
+    if(variantSel && variants) applyList(variants[variantSel]); else resetVersions("Select a platform first");
+    notifyFrame();
+  });
   $("from").addEventListener("change", e => {
     fromSel = e.target.value;
     if(toSel && fromSel && cmp(toSel, fromSel) <= 0) toSel = "";
