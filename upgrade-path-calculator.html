@@ -201,11 +201,18 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
     $("product").innerHTML = `<option value="">Select a product</option>` + PRODUCTS.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
   }
 
+  function optionsFor(items, placeholder){
+    return `<option value="">${placeholder}</option>` + items.map(r => `<option value="${esc(r.version)}">${esc(v(r.version))} (${label(r.type)})</option>`).join("");
+  }
+
+  // Current list shows only versions older than the target; target list only versions newer than the current.
   function fillVersions(){
-    const opts = `<option value="">Select a version</option>` + list.map(r => `<option value="${esc(r.version)}">${esc(v(r.version))} (${label(r.type)})</option>`).join("");
-    $("from").innerHTML = opts; $("to").innerHTML = opts;
-    $("from").disabled = false; $("to").disabled = false;
-    fromSel = ""; toSel = "";
+    const fromItems = toSel ? list.filter(r => cmp(r.version, toSel) < 0) : list;
+    const toItems = fromSel ? list.filter(r => cmp(r.version, fromSel) > 0) : list;
+    $("from").innerHTML = optionsFor(fromItems, "Select a version");
+    $("to").innerHTML = optionsFor(toItems, toItems.length ? "Select a version" : "No newer versions available");
+    $("from").value = fromSel; $("to").value = toSel;
+    $("from").disabled = false; $("to").disabled = !toItems.length;
   }
 
   function resetVersions(msg){
@@ -234,7 +241,7 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
       if(!validList(data)) throw new Error("invalid release list");
       const seen = new Set();
       list = data.filter(r => seen.has(r.version) ? false : seen.add(r.version)).sort((a,b) => cmp(a.version,b.version));
-      fillVersions(); setStatus("");
+      fromSel = ""; toSel = ""; fillVersions(); setStatus("");
     }catch(err){
       resetVersions("Versions unavailable");
       setStatus(`The release list for ${product.name} could not be loaded. Please try again later.`, true);
@@ -317,8 +324,16 @@ select:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(
   }
 
   $("product").addEventListener("change", e => loadProduct(e.target.value));
-  $("from").addEventListener("change", e => { fromSel = e.target.value; render(); });
-  $("to").addEventListener("change", e => { toSel = e.target.value; render(); });
+  $("from").addEventListener("change", e => {
+    fromSel = e.target.value;
+    if(toSel && fromSel && cmp(toSel, fromSel) <= 0) toSel = "";
+    fillVersions(); render();
+  });
+  $("to").addEventListener("change", e => {
+    toSel = e.target.value;
+    if(fromSel && toSel && cmp(fromSel, toSel) >= 0) fromSel = "";
+    fillVersions(); render();
+  });
   $("saveImg").addEventListener("click", saveImage);
   $("savePdf").addEventListener("click", savePdf);
   window.addEventListener("resize", notifyFrame);
